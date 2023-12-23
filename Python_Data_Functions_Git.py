@@ -8,13 +8,25 @@ Created on Mon Dec 18 22:32:05 2023
 import warnings
 warnings.filterwarnings('ignore')
 
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+from sklearn.model_selection import train_test_split, StratifiedKFold, RandomizedSearchCV
+from sklearn.ensemble import GradientBoostingClassifier as gbc
+from sklearn.metrics import classification_report, precision_recall_curve, roc_auc_score, roc_curve, PrecisionRecallDisplay, precision_score, recall_score
+
+
+input_data = pd.read_csv(r"C:\Users\jaten\Downloads\Sapient_Data\data\Refined_Dataset.csv")
+del input_data['ID']
+
+
 def null_finding(data):
     df_null = data.isnull().sum().reset_index().sort_values(by=0,ascending=False)
     df_null['null_ratio'] = df_null[0]/data.shape[0]
     return df_null[['index','null_ratio']]
 
 
-from sklearn.model_selection import train_test_split
     
 def train_test_validation_splits(data,target,test_ratio,validation_ratio,imbalanced):
     features = list(set(data.columns) - set([target]))
@@ -38,16 +50,8 @@ def train_test_validation_splits(data,target,test_ratio,validation_ratio,imbalan
 
 
 
-import pandas as pd
-
-input_data = pd.read_csv(r"C:\Users\jaten\Downloads\Sapient_Data\data\Refined_Dataset.csv")
-
-del input_data['ID']
-
-
 train_x, train_y, val_x, val_y, test_x, test_y = train_test_validation_splits(input_data,'Default',0.33,0.0,True)
    
-from sklearn.ensemble import GradientBoostingClassifier as gbc
 
 def gbc_base_model_train(X,Y,**kwargs):
     '''add other hyperparameter in dynamic way 
@@ -67,10 +71,6 @@ add hyperparamter tuning
 grid search/ random search
 '''
 
-import matplotlib.pyplot as plt
-
-from sklearn.metrics import classification_report, precision_recall_curve, roc_auc_score, roc_curve, PrecisionRecallDisplay
-from sklearn.metrics import precision_score, recall_score
 
 ''' we can modify the below function to include regression metrics as well'''
 
@@ -110,9 +110,6 @@ def find_model_performance(trained_model,x,y):
     
 precision,recall,auc_value = find_model_performance(model,test_x,test_y)
 
-
-import numpy as np
-from sklearn.model_selection import StratifiedKFold, RandomizedSearchCV
 
 def gbc_best_model_selection(X,Y):
     ''' currently using randomized search '''
