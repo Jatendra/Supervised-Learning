@@ -108,7 +108,7 @@ def find_model_performance(trained_model,x,y):
     return prec,rec,auc_value
     
     
-precision,recall,auc_value = find_model_performance(model,test_x,test_y)
+print(precision,recall,auc_value = find_model_performance(model,test_x,test_y))
 
 
 def gbc_best_model_selection(X,Y):
@@ -142,9 +142,9 @@ def gbc_best_model_selection(X,Y):
 
 best_gbc = gbc_best_model_selection(train_x,train_y).best_estimator_
                                     
-best_gbc
+print(best_gbc)
                                    
-precision,recall,auc_value = find_model_performance(best_gbc,test_x,test_y)
+print(precision,recall,auc_value = find_model_performance(best_gbc,test_x,test_y))
 
     
     
