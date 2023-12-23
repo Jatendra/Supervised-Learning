@@ -66,13 +66,7 @@ def gbc_base_model_train(X,Y,**kwargs):
 
 model = gbc_base_model_train(train_x, train_y)
 
-'''
-add hyperparamter tuning
-grid search/ random search
-'''
-
-
-''' we can modify the below function to include regression metrics as well'''
+# we can modify the below function to include regression metrics as well
 
 def find_model_performance(trained_model,x,y):
     '''Can add more performance metrics if required 
@@ -144,7 +138,10 @@ best_gbc = gbc_best_model_selection(train_x,train_y).best_estimator_
                                     
 print(best_gbc)
                                    
-print(precision,recall,auc_value = find_model_performance(best_gbc,test_x,test_y))
+precision,recall,auc_value = find_model_performance(best_gbc,test_x,test_y)
+
+print(precision,recall,auc_value)
+
 
     
     
