@@ -247,7 +247,7 @@ Objective candidate: reg:absoluteerror
 '''
 
 '''
-objective = learning task & objective function (see above list @424)
+objective = learning task & objective function (see above list @227)
 base_score = base score value for classifier, 0.5
 booster = type of boosting model, gbtree, gblinear, dart(dropouts meet multiple additive regression trees)
 callbacks = list of callback function to call while training
