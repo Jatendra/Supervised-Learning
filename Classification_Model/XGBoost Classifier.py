@@ -9,17 +9,21 @@ import numpy as np
 from IPython.display import display
 import matplotlib.pyplot as plt
 
-import Utils
 import os
+os.getcwd()
+
+os.chdir(r'C:\Users\jaten\OneDrive\Documents\GitHub\Supervised-Learning\Classification_Model')
+
+import Utils
 
 import xgboost as xgb
 from sklearn.metrics import precision_recall_curve, \
     PrecisionRecallDisplay,recall_score, precision_score,classification_report,\
         roc_auc_score, roc_curve
 
+from sklearn.model_selection import RandomizedSearchCV, StratifiedKFold
 
-os.chdir(r'C:\Users\jaten\OneDrive\Documents\GitHub\Supervised-Learning\Classification_Model')
-os.getcwd()
+## Load Data
 
 input_data = Utils.load_data(r"C:\Users\jaten\Downloads\Sapient_Data\data\Refined_Dataset.csv")
 
@@ -75,6 +79,7 @@ def missing_value_imputation(data):
     return None
 
 check_duplicate_records = input_data.duplicated()
+check_duplicate_records
 
 input_data = input_data.drop_duplicates()
 '''
@@ -89,9 +94,7 @@ performance, event rate :
 model performance : overfitting vs underfitting (train error/validation vs interations) : how much iteration are required to get the minima 
 '''
 
-del input_data['ID']
-
-train_x, train_y, val_x, val_y, test_x, test_y = Utils.train_test_validation_splits(input_data,'Default',0.33,0.0,True)
+train_x, train_y, val_x, val_y, test_x, test_y = Utils.train_test_validation_splits(input_data,'Default',0.25,0.0,True,['ID'])
 
 '''
 This model is based on XGBoost Library
@@ -187,7 +190,7 @@ def xgb_base_model_train_v2(X,Y,x,y,**kwargs):
 xgb_base_v2 = xgb_base_model_train_v2(train_x,train_y,test_x,test_y)
 
 
-def find_model_performance_v2(trained_model,x,y):
+def find_model_performance_sklearn(trained_model,x,y):
     '''Can add more performance metrics if required 
     right now I will cover PR Curve, ROC AUC, Classification Report'''
     
@@ -221,7 +224,10 @@ def find_model_performance_v2(trained_model,x,y):
     
     return prec,rec,auc_value
 
-find_model_performance_v2(xgb_base_v2,test_x,test_y)
+
+# get performance matrics for sklearn model
+
+find_model_performance_sklearn(xgb_base_v2,test_x,test_y)
 
 '''
 Objective candidate: rank:ndcg
@@ -247,13 +253,13 @@ Objective candidate: reg:absoluteerror
 '''
 
 '''
-objective = learning task & objective function (see above list @424)
+objective = learning task & objective function (see above list @227)
 base_score = base score value for classifier, 0.5
 booster = type of boosting model, gbtree, gblinear, dart(dropouts meet multiple additive regression trees)
 callbacks = list of callback function to call while training
 colsample_bylevel = # random cols for each split during level of tree
 colsample_bynode =  # random cols for each split at tree node
-cosample_bytree = kinda <max_features>
+colsample_bytree = kinda <max_features>
 device = CPU, GPU
 early_stopping_rounds = if eval metric won't stop till this
 enable_categorical = flag to indicate to enable categorical features
@@ -289,5 +295,83 @@ verbosity = 0-silent, 1- warning, 2- info
 seed - similar to random_state
 '''
 
+############### Model Selection #####################
+
+'''
+Rather than tuning all hyper paramters, we can tune few imp paramters first
+This includes tuning one, two most imp hyperparameters
+Later tuning other 6-8 hyper parameters
+'''
+
+learning_rate(eta)
+n_estimators (num_boost_round)
+max_depth
+min_child_weight
+subsample
+colsample_bytree
+gamma(min_split_loss)
+reg_lambda
+reg_alpha
+scale_pos_weight
 
 
+# np.random.random_sample(4) -> [0,1]; size : height,row,column/row,column/column
+
+'''can't use randomized search cv for xgboost library directly, 
+if you want to use just follow for loop for random choice of parameters and run it.
+'''
+
+# using randomized search for sklearn wrapper model
+
+def set_tuning_params_v1(**kwargs):
+    params = {'objective':['binary:logistic','reg:logistic'],
+              'eval_metric':['error','logloss'],
+              'learning_rate': [0.01,0.1,0.3,0.5]}
+    
+    return params
+
+
+def xgb_classifier_best_model(params,X,Y,**kwargs):
+
+    '''
+    xgb.xgbclassifier is being used here to make it less complex.
+    will append the parameters sequentially in order to speed up the process.
+    '''
+
+    xgb_model = xgb.XGBClassifier(random_state=42)
+    
+    cv = StratifiedKFold(n_splits=6,shuffle=True,random_state=42)
+    xgb_cv = RandomizedSearchCV(xgb_model,param_distributions=params,n_iter=10,scoring='recall',n_jobs=-1,cv=cv,verbose=3,error_score='raise',random_state=42)
+    xgb_cv.fit(X,Y)
+    
+    return xgb_cv
+
+
+xgb_cv_results = xgb_classifier_best_model(params=set_tuning_params_v1(),X=train_x,Y=train_y)
+
+xgb_cv_results.best_score_
+
+best_xgb_classifier= xgb_cv_results.best_estimator_
+
+# get performance matrics for tuned model
+
+find_model_performance_sklearn(best_xgb_classifier,test_x,test_y)
+
+
+# took a sample to check how kwargs argument works, args is simple : positional arguments
+
+def sample(**kwargs):
+    for key, value in kwargs.items():
+        if key == 'first' : a= value
+        else : b= value
+    return a+b    
+
+
+sample(first=1,second=2)
+
+
+'''
+tuned model = 1/0
+tuned =0 : simple fit with some parameters
+tuned =1 : cv + fit with parameters
+'''
