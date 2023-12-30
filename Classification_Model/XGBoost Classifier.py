@@ -79,9 +79,10 @@ def missing_value_imputation(data):
     return None
 
 check_duplicate_records = input_data.duplicated()
-check_duplicate_records
+check_duplicate_records.shape
 
 input_data = input_data.drop_duplicates()
+display(input_data.shape)
 '''
 short comings
 data : basic anomaly, missing value, distribution
@@ -100,12 +101,14 @@ train_x, train_y, val_x, val_y, test_x, test_y = Utils.train_test_validation_spl
 This model is based on XGBoost Library
 '''
 def Dmatrix(X,Y,x,y):
-    dtrain = xgb.DMatrix(X,Y)
-    dtest = xgb.DMatrix(x,y)
+    ''' data, label, enable_categorical, missing '''
+    dtrain = xgb.DMatrix(data=X,label=Y) 
+    dtest = xgb.DMatrix(data=x,label=y) 
     
     return dtrain, dtest
 
 dtrain, dtest = Dmatrix(train_x,train_y,test_x,test_y)
+
 
 def set_params(**kwargs):
     params = {'objective' : 'binary:logistic',
@@ -357,6 +360,8 @@ best_xgb_classifier= xgb_cv_results.best_estimator_
 
 find_model_performance_sklearn(best_xgb_classifier,test_x,test_y)
 
+##----------------------------------------------------------------------------------------------------##
+##----------------------------------------------------------------------------------------------------##
 
 # took a sample to check how kwargs argument works, args is simple : positional arguments
 
@@ -375,3 +380,65 @@ tuned model = 1/0
 tuned =0 : simple fit with some parameters
 tuned =1 : cv + fit with parameters
 '''
+
+##----------------------------------------------------------------------------------------------------##
+##----------------------------------------------------------------------------------------------------##
+
+## Increase the dose of hyperparameters
+# starting point for scale pos weight : neg/pos
+
+def set_tuning_params_v2(**kwargs):
+    params = {'objective':['binary:logistic'],
+              'eval_metric':['logloss'],
+              'learning_rate': [0.1,0.3,0.5],
+              'scale_pos_weight': [13.5,15.5,17.5]}
+    
+    return params
+
+
+xgb_cv_results_v2 = xgb_classifier_best_model(params=set_tuning_params_v2(),X=train_x,Y=train_y)
+
+xgb_cv_results_v2.best_score_
+
+best_xgb_classifier_v2= xgb_cv_results_v2.best_estimator_
+
+# get performance matrics for tuned model
+
+find_model_performance_sklearn(best_xgb_classifier_v2,test_x,test_y)
+
+# get the list of hyperparameters of above one
+
+for key, value in best_xgb_classifier_v2.get_params().items():
+    print(f"{key}: {value}")
+
+##----------------------------------------------------------------------------------------------------##
+##----------------------------------------------------------------------------------------------------##
+
+
+def set_tuning_params_v3(**kwargs):
+    params = {'objective':['binary:logistic'],
+              'eval_metric':['logloss'],
+              'learning_rate': [0.1,0.3,0.5,0.7],
+              'scale_pos_weight': [9.5,11.5,13.5,15.5,17.5],
+              'n_estimators' : [100,500,1000,1500],
+              'max_depth' : [5,10,15],
+              'min_child_weight' : [1,5,10],
+              'subsample' : [0.75,0.8,0.85,0.9],
+              'colsample_bytree' : [0.7,0.8,0.9,1.0],
+              'gamma' : [0.1,1,3],
+              'reg_lambda' : [0.1,0.5,1],
+              'reg_alpha' : [0.1,0.5,1]
+              }
+    
+    return params
+
+
+xgb_cv_results_v3 = xgb_classifier_best_model(params=set_tuning_params_v3(),X=train_x,Y=train_y)
+
+xgb_cv_results_v3.best_score_
+
+best_xgb_classifier_v3= xgb_cv_results_v3.best_estimator_
+
+# get performance matrics for tuned model
+
+find_model_performance_sklearn(best_xgb_classifier_v3,test_x,test_y)
