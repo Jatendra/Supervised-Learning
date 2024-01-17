@@ -104,6 +104,7 @@ def main():
     display(input_data.Default.value_counts()) 
     '''data is imbalanced, has to check how svm handles this'''
 
+    # take sample data if training time is very high
     sample_data = input_data.sample(10000)
 
     ## Train Test Splits
